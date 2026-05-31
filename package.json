@@ -1,0 +1,10 @@
+{
+  "name": "fastapi-full-stack-template",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "lint": "npm run lint --prefix frontend",
+    "test": "npm run test --prefix frontend",
+    "test:ui": "npm run test:ui --prefix frontend"
+  }
+}

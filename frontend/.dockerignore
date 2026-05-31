@@ -1,0 +1,12 @@
+node_modules
+.svelte-kit
+build
+.env
+.env.*
+dist
+playwright/.auth
+blob-report
+test-results
+playwright-report
+.git
+.gitignore

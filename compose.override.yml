@@ -1,0 +1,110 @@
+services:
+
+  # Local services are available on their ports, but also available on:
+  # http://api.localhost.tiangolo.com: backend
+  # http://dashboard.localhost.tiangolo.com: frontend
+  # etc. To enable it, update .env, set:
+  # DOMAIN=localhost.tiangolo.com
+  caddy:
+    image: caddy:2
+    profiles:
+      - production
+    ports:
+      - "80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - caddy-net
+      - default
+    environment:
+      - DOMAIN=localhost
+
+  db:
+    restart: "no"
+    ports:
+      - "${HOST_PORT_DB:-5433}:5432"
+
+  adminer:
+    restart: "no"
+    ports:
+      - "8081:8080"
+
+  backend:
+    restart: "no"
+    ports:
+      - "${HOST_PORT_BACKEND:-8000}:8000"
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    # command: sleep infinity  # Infinite loop to keep container alive doing nothing
+    command:
+      - fastapi
+      - run
+      - --reload
+      - "app/main.py"
+    develop:
+      watch:
+        - path: ./backend
+          action: sync
+          target: /app/backend
+          ignore:
+            - ./backend/.venv
+            - .venv
+        - path: ./backend/pyproject.toml
+          action: rebuild
+    # TODO: remove once coverage is done locally
+    volumes:
+      - ./backend/htmlcov:/app/backend/htmlcov
+    environment:
+      SMTP_HOST: "mailcatcher"
+      SMTP_PORT: "1025"
+      SMTP_TLS: "false"
+      EMAILS_FROM_EMAIL: "noreply@example.com"
+
+  mailcatcher:
+    image: schickling/mailcatcher
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+
+  frontend:
+    restart: "no"
+    ports:
+      - "${HOST_PORT_FRONTEND:-5173}:3000"
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - ORIGIN=http://localhost:${HOST_PORT_FRONTEND:-5173}
+        - PUBLIC_API_URL=http://backend:8000
+    environment:
+      - PORT=3000
+      - PUBLIC_API_URL=http://backend:8000
+
+  playwright:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.playwright
+      args:
+        - PUBLIC_API_URL=http://backend:8000
+    ipc: host
+    depends_on:
+      - backend
+      - mailcatcher
+    env_file:
+      - .env
+    environment:
+      - PUBLIC_API_URL=http://backend:8000
+      - MAILCATCHER_HOST=http://mailcatcher:1080
+      - PLAYWRIGHT_HTML_HOST=0.0.0.0
+      - CI=${CI}
+    volumes:
+      - ./frontend/blob-report:/app/frontend/blob-report
+      - ./frontend/test-results:/app/frontend/test-results
+    ports:
+      - 9323:9323
+
+networks:
+  caddy-net:
+    # For local dev, don't expect an external Caddy network
+    external: false

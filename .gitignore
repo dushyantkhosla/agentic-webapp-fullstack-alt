@@ -1,0 +1,46 @@
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+frontend/build/
+frontend/.svelte-kit/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+*.egg-info/
+.venv/
+backend/.venv/
+backend/htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Testing
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+playwright/.auth/
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Misc
+*.log
+*.tmp
+*.swp
+*~
